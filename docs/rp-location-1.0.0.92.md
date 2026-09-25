@@ -1,0 +1,15 @@
+# R/P authoritative warehouse — 1.0.0.92
+
+This supersedes the location rules in the 1.0.0.91 implementation notes. Inventory Transaction.Source Warehouse Code (SKUTRANS_WHSE_CODE) is the BC Location Code directly. A blank or different location on the exact resolved purchase line is changed through standard `Validate("Location Code", Warehouse)` and `Modify(true)` before receipt quantity preparation. A matching location requires no change. Blank or overlength warehouse values are rejected; no translation or truncation is performed.
+
+Codeunit 80037 no longer requires the PO staging header's warehouse or location to match, and does not rely on the inventory staging BC Location Code as the location authority. It sets that derived field to the receipt location inside the posting transaction. Reconciliation compares the actual posted receipt location to the source warehouse and restores the derived field from the receipt. The original source-warehouse snapshot and GUID evidence still protect retries.
+
+Standard Purchase Line location validation requires an Open document. When a location change is required on a Released PO, the handler uses `Release Purchase Document.PerformManualReopen`, validates and saves only the resolved line, then calls `PerformManualRelease`. It does not suspend status or approval checks. Pending approvals, prepayments, receipt activity, reservations, and warehouse restrictions remain subject to BC validation. Any error rolls back the location and status changes with the receipt attempt. CommitBehavior::Error also blocks any attempted commit from the standard prepayment failure branch.
+
+The PO header location, other PO line locations, and PO staging records are not updated. Unrelated receipt quantities are still zeroed by the existing receipt-scoping code. Standard over-receipt configuration and validation remain unchanged; an Open order still needs to be Released before over-receipt validation. SQL, uspStagePurchaseOrders and PowerShell transport are unchanged.
+
+For transaction 8763071, after the exact staging/PO identity is resolved, the intended line on BC PO 106472 receives location M whether its prior location is blank or different, subject to standard BC validation. Qty. to Receive remains the transaction quantity of 72. The earlier zero-staging-match error is a separate prerequisite; this change does not weaken exact source-line matching.
+
+Changed objects: Codeunit 80037, test Codeunit 80095, and manifest version 1.0.0.92. Regression coverage includes accepting a location difference during exact resolution, ignoring blank header staging locations and stale derived transaction location, preserving a matching released line, rejecting overlength warehouse codes, enforcing standard received-not-invoiced restrictions, and reconciling against warehouse rather than the stale derived location field.
+
+Production and test packages compile against BC 28.1. Runtime tests and a live receipt have not been executed. No package was published and no pending transactions were processed.

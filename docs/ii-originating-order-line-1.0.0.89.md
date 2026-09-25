@@ -1,0 +1,15 @@
+# Originating Sales Order line mapping — 1.0.0.89
+
+Table 80014 adds field 340, Source Sales Order Line No., as Integer with the same caption. AL Integer has no nullable storage state: zero represents an unavailable value. Existing fields and keys are unchanged. API Page 80028 exposes sourceSalesOrderLineNo and retains ModifyAllowed = true for historical PATCH updates. Pages 80031 and 80033 show the field read-only beside Source Sequence.
+
+Codeunit 80034 Resolve is the only production matcher function changed. For ITEM lines with a nonzero originating line number it requires a source order number and resolved originating order staging. Existing database, source order ID, source order number and BC document checks remain. It adds a filter on Table 80010 Source Line No. (SORDERD_LINE), then applies the existing size position, raw SKU, BC item and variant filters. Zero candidates raise an explicit-origin error; multiple candidates raise ambiguity including the originating line and candidate detail IDs. Exactly one candidate proceeds through the existing current BC line lookup, SystemId check and VerifyLine checks. No actual-line fallback or new-line creation is allowed for an unresolved explicit origin.
+
+ITEM lines with zero retain the existing matcher behavior. CHARGE/Resource lines ignore the new field. Invoice Source Line No., Source Sequence, BC Sales Line No. and source detail ID are not used as substitutes for SORDERD_LINE. An explicit ITEM origin with a missing header order number is rejected rather than silently treated as legacy.
+
+Changed production objects: Table 80014; Pages 80028, 80031, 80033; Codeunit 80034. App manifest version: 1.0.0.89. Test Codeunit 80095 adds origin regression cases. SQL, PowerShell files, Sales Order transport, posting/tax architecture and SystemId handling were not changed.
+
+Controlled example: invoice 341781 line 1, order S143289, origin 35, A094BAU / size 1 / A094 / BAU-SM selects source detail 659591 and BC line 1590000, excluding origin 21/detail 659577/BC line 990000. Line 2 origin 36 selects detail 659592 for A094LAV; its test uses a synthetic BC line number because the request supplies no actual BC line number for that detail.
+
+Production and test packages compile against local BC 28.1 symbols. New tests cover both supplied source relationships, no fallback even with a saved different BC line reference, absent staged order/header order number, duplicates within an explicit source line and each product/size mismatch. Existing tests retain legacy ambiguity, Resource matching, physical line identity and lifecycle coverage. Tests have not been executed in BC. The separate test package is 1.0.0.15; the existing PowerShell build script was not changed.
+
+Publish 1.0.0.89, use the completed PowerShell v5.4 transport to PATCH the new field, and inspect it on the Sales Document line pages. Manually preview/retry invoice 341781 after confirming origins 35 and 36. No invoice processing, bulk processing, publication or live-data modification was performed here.

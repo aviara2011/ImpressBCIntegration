@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "AL: Generated Snapshot request",
+            "request": "snapshotInitialize",
+            "type": "al",
+            "environmentType": "Production",
+            "environmentName": "Techstyles",
+            "sessionId": 94712,
+            "breakOnNext": "WebClient",
+            "executionContext": "DebugAndProfile",
+            "tenant": "97aa7e45-fb59-4be3-9315-5c59f22eb769"
+        },
+        {
+            "name": "Techstyles",
+            "request": "launch",
+            "type": "al",
+            "environmentType": "Production",
+            "environmentName": "Techstyles",
+            "tenant": "97aa7e45-fb59-4be3-9315-5c59f22eb769",
+            "startupObjectId": 22,
+            "startupObjectType": "Page",
+            "breakOnError": "All",
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true
+        }
+    ]
+}
